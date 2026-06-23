@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدخال الأسماء — احترافي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-hover: #f8fafc;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-focus: var(--primary);
+  --border-error: #dc2626;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 20px;
+}
+#app { max-width: 1320px; margin: 0 auto; }
+
+/* ─── HEADER ─── */
+header {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+header h1::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 28px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.row-count {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: var(--bg);
+  padding: 4px 14px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* ─── KEYBOARD HINT ─── */
+.kbd-hint {
+  font-size: 0.71875rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.kbd-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.6875rem;
+  background: var(--bg);
+}
+
+/* ─── BUTTONS ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  min-height: 44px;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #15803d; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--surface-hover); border-color: var(--text-secondary); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: none; padding: 4px 8px; min-height: 32px; font-size: 0.75rem; }
+.btn-ghost:hover { color: var(--error); }
+.btn-sm { padding: 6px 12px; font-size: 0.8125rem; min-height: 32px; }
+.btn-xs { padding: 4px 8px; font-size: 0.6875rem; min-height: 26px; border-radius: var(--radius-sm); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-icon {
+  width: 36px; height: 36px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: transparent; cursor: pointer; color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+.btn-icon:hover { background: var(--surface-hover); color: var(--text); }
+
+/* ─── CARD ─── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* ─── FORM ─── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.form-grid .full-width { grid-column: 1 / -1; }
+.form-grid .half-col { grid-column: span 1; }
+.form-grid .quarter-col { grid-column: span 1; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field label .required { color: var(--error); }
+.field label .clear-btn {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-right: auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  visibility: hidden;
+  transition: all 100ms ease;
+}
+.field:hover label .clear-btn { visibility: visible; }
+.field label .clear-btn:hover { color: var(--error); background: var(--error-bg); }
+
+.field input,
+.field select {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.9375rem;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  width: 100%;
+  min-height: 44px;
+}
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.field input:read-only,
+.field input:disabled {
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+.field input.error,
+.field select.error {
+  border-color: var(--border-error);
+}
+.field input.error:focus,
+.field select.error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+.field-error {
+  font-size: 0.75rem;
+  color: var(--error);
+  min-height: 1em;
+  line-height: 1.3;
+}
+
+/* ─── AUTOCOMPLETE ─── */
+.ac-wrapper { position: relative; }
+.ac-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.ac-list.active { display: block; }
+.ac-item {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+.ac-item:hover { background: var(--primary-light); }
+.ac-item:first-child { border-top: 1px solid var(--border); }
+
+/* ─── FORM ACTIONS ─── */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.editing-badge {
+  display: none;
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 0.75rem;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+.editing-badge.visible { display: inline-block; }
+
+/* ─── STATS BAR ─── */
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 0 4px;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-num {
+  font-weight: 700;
+  color: var(--text);
+  min-width: 1.5em;
+  text-align: center;
+}
+
+/* ─── SEARCH ─── */
+.search-bar {
+  margin-bottom: 12px;
+}
+.search-bar input {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.875rem;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  width: 100%;
+  max-width: 360px;
+  transition: all 150ms ease;
+  min-height: 44px;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  background: var(--surface);
+}
+
+/* ─── LAST ENTRIES BAR ─── */
+.last-entries {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--primary-light);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-size: 0.8125rem;
+  flex-wrap: wrap;
+  min-height: 44px;
+}
+.last-entries-label {
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+.last-entry-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 0.78125rem;
+  color: var(--text);
+}
+.last-entries-empty {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ─── STICKY COLUMNS ─── */
+#table-container th,
+#table-container td {
+  background: inherit;
+}
+#table-container th {
+  background: var(--bg);
+}
+thead th.sticky-cell,
+tbody td.sticky-cell {
+  position: sticky;
+  z-index: 2;
+}
+thead th.sticky-cell { z-index: 3; }
+
+/* ─── TABLE ─── */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+thead { background: var(--bg); position: sticky; top: 0; z-index: 1; }
+th {
+  padding: 10px 8px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  font-size: 0.75rem;
+}
+td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr { transition: background 100ms ease; }
+tbody tr:hover { background: var(--surface-hover); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.highlight { background: var(--primary-light); }
+.actions-cell { display: flex; gap: 4px; }
+.actions-cell .btn { min-height: 30px; padding: 4px 8px; font-size: 0.71875rem; }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+.empty-state-icon { font-size: 2.5rem; margin-bottom: 8px; opacity: 0.35; }
+.empty-state-sub { font-size: 0.8125rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ─── TOAST ─── */
+#toast-container {
+  position: fixed;
+  top: 16px;
+  right: 50%;
+  transform: translateX(50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: toastIn 200ms ease forwards;
+  max-width: 480px;
+  direction: rtl;
+}
+.toast-success { background: var(--success-bg); color: var(--success); border-right: 4px solid var(--success); }
+.toast-error { background: var(--error-bg); color: var(--error); border-right: 4px solid var(--error); }
+.toast-warning { background: var(--warning-bg); color: var(--warning); border-right: 4px solid var(--warning); }
+.toast-leaving { animation: toastOut 200ms ease forwards; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+
+/* ─── STORAGE WARNING ─── */
+.storage-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78125rem;
+  font-weight: 500;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.storage-warning.visible { display: flex; }
+
+/* ─── MODAL OVERLAY ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 32px 28px 24px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: modalIn 200ms ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-icon { font-size: 2.5rem; margin-bottom: 12px; line-height: 1; }
+.modal-message {
+  font-size: 1rem;
+  margin-bottom: 24px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ─── UNDO BANNER ─── */
+.undo-banner {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.undo-banner.visible { display: flex; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full-width { grid-column: 1; }
+  header { flex-direction: column; align-items: stretch; }
+  header h1 { justify-content: center; }
+  .header-actions { justify-content: center; }
+  .kbd-hint { justify-content: center; }
+}
+@media (max-width: 600px) {
+  body { padding: 12px; }
+  .card { padding: 16px; }
+  .form-grid { gap: 10px; }
+  header { padding: 16px; }
+  header h1 { font-size: 1.25rem; }
+  .search-bar input { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1>نظام إدخال الأسماء</h1>
+      <div class="kbd-hint">
+        <span><kbd>Enter</kbd> إرسال</span>
+        <span><kbd>Ctrl+Z</kbd> تراجع</span>
+        <span><kbd>/</kbd> بحث</span>
+        <span><kbd>Esc</kbd> إلغاء تعديل</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="row-count" id="row-count">عدد الصفوف: 0</span>
+      <button class="btn btn-outline btn-sm" onclick="toggleDirection()" id="dir-btn" style="font-size:0.75rem;">اتجاه: RTL</button>
+      <button class="btn btn-primary" id="export-btn" onclick="exportToExcel()">تصدير Excel</button>
+      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+      <button class="btn btn-outline" onclick="importFromExcel()">استيراد Excel</button>
+      <button class="btn btn-danger" onclick="handleClear()">مسح الكل</button>
+    </div>
+  </header>
+
+  <div id="toast-container"></div>
+
+  <div class="undo-banner" id="undo-banner">
+    <span id="undo-message">تم الحذف</span>
+    <button class="btn btn-sm btn-outline" onclick="undo()">تراجع (Ctrl+Z)</button>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon">⚠️</div>
+      <div class="modal-message" id="modal-message"></div>
+      <div class="modal-actions">
+        <button class="btn btn-success" id="modal-confirm">تأكيد</button>
+        <button class="btn btn-outline" id="modal-cancel">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+      <h2 class="card-title" style="margin-bottom:0;">نموذج الإدخال</h2>
+      <span class="editing-badge" id="editing-badge">تعديل صف</span>
+    </div>
+    <div class="storage-warning" id="storage-warning">تنبيه: عدد الصفوف يقترب من الحد الأقصى للتخزين المحلي.</div>
+    <form id="entry-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field quarter-col">
+          <label for="serial">مسلسل</label>
+          <input type="text" id="serial" readonly>
+        </div>
+        <div class="field quarter-col">
+          <label for="localityCode">كود المحلية <span class="required">*</span>
+            <span class="clear-btn" data-clear="localityCode">مسح</span>
+          </label>
+          <div class="ac-wrapper">
+            <input type="text" id="localityCode" autofocus>
+            <div class="ac-list" id="ac-localityCode"></div>
+          </div>
+          <div class="field-error" id="err-localityCode"></div>
+        </div>
+        <div class="field quarter-col">
+          <label for="schoolCode">كود المدرسة <span class="required">*</span>
+            <span class="clear-btn" data-clear="schoolCode">مسح</span>
+          </label>
+          <div class="ac-wrapper">
+            <input type="text" id="schoolCode">
+            <div class="ac-list" id="ac-schoolCode"></div>
+          </div>
+          <div class="field-error" id="err-schoolCode"></div>
+        </div>
+        <div class="field half-col">
+          <label for="firstName">اسم التلميذ الأول <span class="required">*</span></label>
+          <input type="text" id="firstName">
+          <div class="field-error" id="err-firstName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="secondName">اسم التلميذ الثاني <span class="required">*</span></label>
+          <input type="text" id="secondName">
+          <div class="field-error" id="err-secondName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="thirdName">اسم التلميذ الثالث <span class="required">*</span></label>
+          <input type="text" id="thirdName">
+          <div class="field-error" id="err-thirdName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="fourthName">اسم التلميذ الرابع <span class="required">*</span></label>
+          <input type="text" id="fourthName">
+          <div class="field-error" id="err-fourthName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="gender">الجنس <span class="required">*</span></label>
+          <select id="gender">
+            <option value="">-- اختر --</option>
+            <option value="ذكر">ذكر</option>
+            <option value="أنثى">أنثى</option>
+          </select>
+          <div class="field-error" id="err-gender"></div>
+        </div>
+        <div class="field half-col">
+          <label for="religion">الديانة <span class="required">*</span></label>
+          <select id="religion">
+            <option value="">-- اختر --</option>
+            <option value="إسلام">إسلام</option>
+            <option value="مسيحية">مسيحية</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+          <div class="field-error" id="err-religion"></div>
+        </div>
+        <div class="field full-width">
+          <label for="motherName">اسم الأم ثلاثي (على الأقل) <span class="required">*</span></label>
+          <input type="text" id="motherName" placeholder="مثال: مريم أحمد حسن">
+          <div class="field-error" id="err-motherName"></div>
+        </div>
+        <div class="field full-width">
+          <label for="schoolName">اسم المدرسة <span class="required">*</span>
+            <span class="clear-btn" data-clear="schoolName">مسح</span>
+          </label>
+          <div class="ac-wrapper">
+            <input type="text" id="schoolName">
+            <div class="ac-list" id="ac-schoolName"></div>
+          </div>
+          <div class="field-error" id="err-schoolName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="localityName">المحلية <span class="required">*</span>
+            <span class="clear-btn" data-clear="localityName">مسح</span>
+          </label>
+          <div class="ac-wrapper">
+            <input type="text" id="localityName">
+            <div class="ac-list" id="ac-localityName"></div>
+          </div>
+          <div class="field-error" id="err-localityName"></div>
+        </div>
+        <div class="field half-col">
+          <label for="operatorName">اسم المدخل <span class="required">*</span>
+            <span class="clear-btn" data-clear="operatorName">مسح</span>
+          </label>
+          <div class="ac-wrapper">
+            <input type="text" id="operatorName">
+            <div class="ac-list" id="ac-operatorName"></div>
+          </div>
+          <div class="field-error" id="err-operatorName"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success" id="submit-btn">إضافة</button>
+        <button type="button" class="btn btn-outline" id="cancel-btn" style="display:none">إلغاء التعديل</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="last-entries" id="last-entries">
+    <span class="last-entries-label">آخر الإدخالات:</span>
+    <span class="last-entries-empty" id="last-entries-empty">—</span>
+    <div id="last-entries-chips" style="display:inline-flex;flex-wrap:wrap;gap:4px;"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+      <h2 class="card-title" style="margin-bottom:0;">سجل الإدخالات</h2>
+    </div>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="🔍 بحث في جميع الحقول... (اضغط / للتركيز)">
+    </div>
+    <div class="table-container" id="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>مسلسل</th>
+            <th>كود المحلية</th>
+            <th>كود المدرسة</th>
+            <th>الاسم الأول</th>
+            <th>الثاني</th>
+            <th>الثالث</th>
+            <th>الرابع</th>
+            <th>الجنس</th>
+            <th>الديانة</th>
+            <th>اسم الأم</th>
+            <th>المدرسة</th>
+            <th>المحلية</th>
+            <th>المدخل</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div>لا توجد بيانات بعد</div>
+      <div class="empty-state-sub">أضف صفاً من النموذج أعلاه</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ─── CONSTANTS ─── */
+  var STORAGE_KEY = 'muaz_data_entry_rows_v2';
+  var STORAGE_WARN_THRESHOLD = 4000;
+  var TOAST_MS = 3000;
+
+  /* ─── STATE ─── */
+  var rows = [];
+  var editingIndex = -1;
+  var searchTerm = '';
+  var undoStack = [];
+  var exportDirection = 'rtl';
+  var lastEntries = [];
+
+  /* ─── COMMON FIELDS (keep values between entries) ─── */
+  var COMMON_FIELDS = ['localityCode', 'schoolCode', 'schoolName', 'localityName', 'operatorName'];
+  var STUDENT_FIELDS = ['firstName', 'secondName', 'thirdName', 'fourthName', 'gender', 'religion', 'motherName'];
+
+  /* ─── DOM SHORTCUTS ─── */
+  var $ = function (id) { return document.getElementById(id); };
+
+  var form = $('entry-form');
+  var tbody = $('table-body');
+  var emptyState = $('empty-state');
+  var submitBtn = $('submit-btn');
+  var cancelBtn = $('cancel-btn');
+  var rowCount = $('row-count');
+  var editingBadge = $('editing-badge');
+  var storageWarning = $('storage-warning');
+  var tableContainer = $('table-container');
+  var toastContainer = $('toast-container');
+  var serialInput = $('serial');
+  var searchInput = $('search-input');
+  var statsBar = $('stats-bar');
+  var undoBanner = $('undo-banner');
+  var undoMessage = $('undo-message');
+  var lastEntriesChips = $('last-entries-chips');
+  var lastEntriesEmpty = $('last-entries-empty');
+  var exportBtn = $('export-btn');
+
+  /* ─── ALL FIELD IDS ─── */
+  var ALL_FIELDS = COMMON_FIELDS.concat(STUDENT_FIELDS);
+
+  /* ─── HELPERS ─── */
+  function getVal(id) { var el = $(id); return el ? el.value.trim() : ''; }
+  function setVal(id, v) { var el = $(id); if (el) el.value = v; }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function getFormData() {
+    var data = {};
+    ALL_FIELDS.forEach(function (id) { data[id] = getVal(id); });
+    return data;
+  }
+
+  function setFormData(data) {
+    ALL_FIELDS.forEach(function (id) {
+      setVal(id, (data && data[id] !== undefined && data[id] !== null) ? data[id] : '');
+    });
+  }
+
+  function clearStudentFields() {
+    STUDENT_FIELDS.forEach(function (id) {
+      setVal(id, '');
+      var err = $('err-' + id);
+      if (err) err.textContent = '';
+      var el = $(id);
+      if (el) el.classList.remove('error');
+    });
+  }
+
+  function clearFieldErrors() {
+    ALL_FIELDS.forEach(function (id) {
+      var err = $('err-' + id);
+      if (err) err.textContent = '';
+      var el = $(id);
+      if (el) el.classList.remove('error');
+    });
+  }
+
+  function showFieldError(id, msg) {
+    var err = $('err-' + id);
+    if (err) err.textContent = msg;
+    var el = $(id);
+    if (el) el.classList.add('error');
+  }
+
+  /* ─── STORAGE ─── */
+  function loadRows() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) { rows = parsed; return; }
+      }
+    } catch (_) {}
+    rows = [];
+  }
+
+  function saveRows() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); }
+    catch (e) { showToast('فشل الحفظ — التخزين المحلي ممتلئ', 'error'); }
+  }
+
+  /* ─── UNDO ─── */
+  function pushUndo() {
+    undoStack.push(JSON.stringify(rows));
+    if (undoStack.length > 20) undoStack.shift();
+  }
+
+  window.undo = function () {
+    if (undoStack.length === 0) {
+      showToast('لا يوجد إجراء للتراجع عنه', 'warning');
+      return;
+    }
+    var prev = undoStack.pop();
+    rows = JSON.parse(prev);
+    editingIndex = -1;
+    searchTerm = '';
+    searchInput.value = '';
+    saveRows();
+    renderAll();
+    updateSerial();
+    submitBtn.textContent = 'إضافة';
+    cancelBtn.style.display = 'none';
+    editingBadge.classList.remove('visible');
+    undoBanner.classList.remove('visible');
+    showToast('تم التراجع', 'success');
+  };
+
+  function showUndoBanner(count) {
+    undoMessage.textContent = 'تم حذف ' + count + ' صف';
+    undoBanner.classList.add('visible');
+    setTimeout(function () { undoBanner.classList.remove('visible'); }, 6000);
+  }
+
+  /* ─── SERIAL ─── */
+  function updateSerial() {
+    serialInput.value = editingIndex >= 0 ? editingIndex + 1 : rows.length + 1;
+  }
+
+  /* ─── AUTOCOMPLETE ─── */
+  var acTimeout = null;
+
+  function buildSuggestions(fieldId) {
+    var input = $(fieldId);
+    var list = $('ac-' + fieldId);
+    if (!input || !list) return;
+    var val = input.value.trim();
+    if (!val || editingIndex >= 0) { list.classList.remove('active'); list.innerHTML = ''; return; }
+
+    var seen = {};
+    var matches = [];
+    for (var i = rows.length - 1; i >= 0; i--) {
+      var v = rows[i][fieldId];
+      if (v && v.indexOf(val) !== -1 && !seen[v]) {
+        seen[v] = true;
+        matches.push(v);
+        if (matches.length >= 8) break;
+      }
+    }
+    if (matches.length === 0) { list.classList.remove('active'); list.innerHTML = ''; return; }
+
+    list.innerHTML = matches.map(function (s) {
+      return '<div class="ac-item" data-val="' + escAttr(s) + '">' + escHtml(s) + '</div>';
+    }).join('');
+    list.classList.add('active');
+  }
+
+  function setupAutocomplete(fieldId) {
+    var input = $(fieldId);
+    var list = $('ac-' + fieldId);
+    if (!input || !list) return;
+
+    input.addEventListener('input', function () {
+      if (acTimeout) clearTimeout(acTimeout);
+      acTimeout = setTimeout(function () { buildSuggestions(fieldId); }, 120);
+    });
+
+    input.addEventListener('focus', function () {
+      if (this.value.trim()) buildSuggestions(fieldId);
+    });
+
+    input.addEventListener('blur', function () {
+      setTimeout(function () { list.classList.remove('active'); }, 200);
+    });
+
+    list.addEventListener('mousedown', function (e) {
+      var item = e.target.closest('.ac-item');
+      if (!item) return;
+      input.value = item.getAttribute('data-val');
+      list.classList.remove('active');
+      input.focus();
+      // Trigger input event so validation clears
+      var evt = new Event('input', { bubbles: true });
+      input.dispatchEvent(evt);
+    });
+  }
+
+  /* ─── STATS ─── */
+  function renderStats() {
+    if (rows.length === 0) { statsBar.innerHTML = ''; return; }
+    var male = 0, female = 0;
+    var localities = {};
+    rows.forEach(function (r) {
+      if (r.gender === 'ذكر') male++;
+      else if (r.gender === 'أنثى') female++;
+      if (r.localityName) localities[r.localityName] = (localities[r.localityName] || 0) + 1;
+    });
+    var topLocal = Object.keys(localities).sort(function (a, b) { return localities[b] - localities[a]; });
+    var localHtml = '';
+    if (topLocal.length > 0) {
+      localHtml = '<span class="stat-item">المحلية: <span class="stat-num">' + escHtml(topLocal[0]) + '</span></span>';
+    }
+    statsBar.innerHTML =
+      '<span class="stat-item">الكل: <span class="stat-num">' + rows.length + '</span></span>' +
+      '<span class="stat-item">ذكر: <span class="stat-num">' + male + '</span></span>' +
+      '<span class="stat-item">أنثى: <span class="stat-num">' + female + '</span></span>' +
+      localHtml;
+  }
+
+  /* ─── TABLE ─── */
+  function renderTable() {
+    var filtered = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (searchTerm) {
+        var q = searchTerm.toLowerCase();
+        var r = rows[i];
+        var haystack = (r.localityCode + ' ' + r.schoolCode + ' ' + r.firstName + ' ' +
+          r.secondName + ' ' + r.thirdName + ' ' + (r.fourthName || '') + ' ' +
+          r.gender + ' ' + r.religion + ' ' + r.motherName + ' ' +
+          r.schoolName + ' ' + r.localityName + ' ' + r.operatorName).toLowerCase();
+        if (haystack.indexOf(q) === -1) continue;
+      }
+      filtered.push({ idx: i, data: rows[i] });
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      tableContainer.style.display = 'none';
+      if (searchTerm) {
+        emptyState.querySelector('.empty-state-icon').textContent = '🔍';
+        emptyState.querySelector('div:nth-child(2)').textContent = 'لا توجد نتائج للبحث';
+        emptyState.querySelector('.empty-state-sub').textContent = 'جرب كلمات أخرى';
+      } else {
+        emptyState.querySelector('.empty-state-icon').textContent = '📋';
+        emptyState.querySelector('div:nth-child(2)').textContent = 'لا توجد بيانات بعد';
+        emptyState.querySelector('.empty-state-sub').textContent = 'أضف صفاً من النموذج أعلاه';
+      }
+      renderRowCount(0);
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    tableContainer.style.display = 'block';
+
+    var html = '';
+    for (var j = 0; j < filtered.length; j++) {
+      var item = filtered[j];
+      var r = item.data;
+      var idx = item.idx;
+      html += '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escHtml(r.localityCode) + '</td>' +
+        '<td>' + escHtml(r.schoolCode) + '</td>' +
+        '<td>' + escHtml(r.firstName) + '</td>' +
+        '<td>' + escHtml(r.secondName) + '</td>' +
+        '<td>' + escHtml(r.thirdName) + '</td>' +
+        '<td>' + escHtml(r.fourthName || '') + '</td>' +
+        '<td>' + escHtml(r.gender) + '</td>' +
+        '<td>' + escHtml(r.religion) + '</td>' +
+        '<td>' + escHtml(r.motherName) + '</td>' +
+        '<td>' + escHtml(r.schoolName) + '</td>' +
+        '<td>' + escHtml(r.localityName) + '</td>' +
+        '<td>' + escHtml(r.operatorName) + '</td>' +
+        '<td class="actions-cell">' +
+        '<button class="btn btn-primary btn-xs" onclick="editRow(' + idx + ')">تعديل</button>' +
+        '<button class="btn btn-danger btn-xs" onclick="deleteRow(' + idx + ')">حذف</button>' +
+        '</td>' +
+        '</tr>';
+    }
+    tbody.innerHTML = html;
+    renderRowCount(filtered.length);
+    renderStats();
+    updateExportBtn();
+    setTimeout(applyStickyColumns, 0);
+  }
+
+  function renderRowCount(shown) {
+    if (shown === undefined) shown = rows.length;
+    if (searchTerm) {
+      rowCount.textContent = 'عرض ' + shown + ' من إجمالي ' + rows.length + ' صف';
+    } else {
+      rowCount.textContent = 'عدد الصفوف: ' + rows.length;
+    }
+    if (rows.length >= STORAGE_WARN_THRESHOLD) storageWarning.classList.add('visible');
+    else storageWarning.classList.remove('visible');
+  }
+
+  function renderAll() {
+    renderTable();
+    renderStats();
+  }
+
+  /* ─── FORM VALIDATION ─── */
+  function validateForm() {
+    clearFieldErrors();
+    var data = getFormData();
+    var ok = true;
+
+    function req(id, msg) {
+      if (!data[id]) { showFieldError(id, msg || 'حقل إلزامي'); ok = false; }
+    }
+    req('localityCode');
+    req('schoolCode');
+    req('firstName');
+    req('secondName');
+    req('thirdName');
+    req('fourthName');
+
+    if (!data.gender) { showFieldError('gender', 'اختر قيمة'); ok = false; }
+    if (!data.religion) { showFieldError('religion', 'اختر قيمة'); ok = false; }
+
+    if (!data.motherName) { showFieldError('motherName', 'حقل إلزامي'); ok = false; }
+    else if (data.motherName.split(/\s+/).length < 3) {
+      showFieldError('motherName', 'يجب أن يحتوي على 3 أجزاء على الأقل');
+      ok = false;
+    }
+
+    req('schoolName');
+    req('localityName');
+    req('operatorName');
+
+    return ok;
+  }
+
+  /* ─── DUPLICATE CHECK ─── */
+  function findDuplicate(first, second, third, excludeIndex) {
+    for (var i = 0; i < rows.length; i++) {
+      if (excludeIndex !== undefined && i === excludeIndex) continue;
+      var r = rows[i];
+      if (r.firstName === first && r.secondName === second && r.thirdName === third) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /* ─── CONFIRM MODAL ─── */
+  function showConfirmModal(msg) {
+    return new Promise(function (resolve) {
+      $('modal-message').textContent = msg;
+      $('modal-overlay').classList.add('active');
+      $('modal-confirm').onclick = function () {
+        $('modal-overlay').classList.remove('active');
+        resolve(true);
+      };
+      $('modal-cancel').onclick = function () {
+        $('modal-overlay').classList.remove('active');
+        resolve(false);
+      };
+    });
+  }
+
+  /* ─── FORM SUBMIT ─── */
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!validateForm()) {
+      var firstErr = document.querySelector('.field input.error, .field select.error');
+      if (firstErr) firstErr.focus();
+      return;
+    }
+    var data = getFormData();
+
+    if (editingIndex >= 0) {
+      var dup = findDuplicate(data.firstName, data.secondName, data.thirdName, editingIndex);
+      if (dup >= 0) {
+        var confirmed = await showConfirmModal('⚠️ يوجد طالب بنفس الاسم في الصف رقم ' + (dup + 1) + '.\nهل تريد حفظ التعديلات مع استمرار التكرار؟');
+        if (!confirmed) return;
+      }
+      rows[editingIndex] = data;
+      pushUndo();
+      saveRows();
+      renderAll();
+      showToast('تم تحديث الصف ' + (editingIndex + 1), 'success');
+      resetFormAfterAdd();
+    } else {
+      var dup2 = findDuplicate(data.firstName, data.secondName, data.thirdName);
+      if (dup2 >= 0) {
+        var confirmed2 = await showConfirmModal('⚠️ يوجد طالب بنفس الاسم في الصف رقم ' + (dup2 + 1) + '.\nهل تريد إضافته مع استمرار التكرار؟');
+        if (!confirmed2) return;
+      }
+      rows.push(data);
+      pushUndo();
+      saveRows();
+      renderAll();
+      updateLastEntries(data.firstName, data.secondName, data.thirdName);
+      showToast('تمت إضافة الصف رقم ' + rows.length, 'success');
+      resetFormAfterAdd();
+    }
+  }
+
+  function handleCancel() {
+    resetFormAfterAdd();
+    showToast('تم إلغاء التعديل', 'warning');
+  }
+
+  /* ─── RESET FORM ─── */
+  function resetFormAfterAdd() {
+    clearStudentFields();
+    clearFieldErrors();
+    editingIndex = -1;
+    submitBtn.textContent = 'إضافة';
+    cancelBtn.style.display = 'none';
+    editingBadge.classList.remove('visible');
+    updateSerial();
+    $('localityCode').focus();
+  }
+
+  /* ─── EDIT / DELETE ─── */
+  window.editRow = function (index) {
+    if (index < 0 || index >= rows.length) return;
+    var r = rows[index];
+    setFormData(r);
+    editingIndex = index;
+    submitBtn.textContent = 'تحديث';
+    cancelBtn.style.display = 'inline-flex';
+    editingBadge.classList.add('visible');
+    updateSerial();
+    clearFieldErrors();
+    $('localityCode').focus();
+    // Scroll to form
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.deleteRow = async function (index) {
+    if (index < 0 || index >= rows.length) return;
+    var confirmed = await showConfirmModal('هل أنت متأكد من حذف هذا الصف؟');
+    if (!confirmed) return;
+    pushUndo();
+    rows.splice(index, 1);
+    if (editingIndex === index) resetFormAfterAdd();
+    else if (editingIndex > index) editingIndex--;
+    saveRows();
+    renderAll();
+    updateSerial();
+    showUndoBanner(1);
+  };
+
+  window.handleClear = async function () {
+    if (rows.length === 0) { showToast('لا توجد بيانات', 'warning'); return; }
+    var confirmed = await showConfirmModal('مسح جميع البيانات (' + rows.length + ' صف)؟ لا يمكن التراجع بعد الحفظ.');
+    if (!confirmed) return;
+    pushUndo();
+    rows = [];
+    resetFormAfterAdd();
+    saveRows();
+    renderAll();
+    updateSerial();
+    showUndoBanner(rows.length);
+  };
+
+  /* ─── LAST ENTRIES ─── */
+  function updateLastEntries(first, second, third) {
+    lastEntries.unshift({ first: first, second: second, third: third });
+    if (lastEntries.length > 5) lastEntries.pop();
+    lastEntriesEmpty.style.display = 'none';
+    lastEntriesChips.innerHTML = lastEntries.map(function (e) {
+      return '<span class="last-entry-chip">' + escHtml(e.first) + ' ' + escHtml(e.second) + ' ' + escHtml(e.third) + '</span>';
+    }).join('');
+  }
+
+  /* ─── STICKY COLUMNS ─── */
+  function applyStickyColumns() {
+    var frozenCount = 2;
+    var rows2 = document.querySelectorAll('#table-body tr, .table-container thead tr');
+    rows2.forEach(function (row) {
+      var cells = row.querySelectorAll('th, td');
+      for (var i = 0; i < frozenCount && i < cells.length; i++) {
+        cells[i].classList.add('sticky-cell');
+      }
+    });
+    var headerRow = document.querySelector('.table-container thead tr');
+    if (headerRow) {
+      var hCells = headerRow.querySelectorAll('th');
+      var right = 0;
+      for (var i = 0; i < frozenCount && i < hCells.length; i++) {
+        hCells[i].style.right = right + 'px';
+        right += hCells[i].offsetWidth;
+      }
+    }
+    var bodyRows = document.querySelectorAll('#table-body tr');
+    bodyRows.forEach(function (row) {
+      var cells = row.querySelectorAll('td');
+      var right = 0;
+      for (var i = 0; i < frozenCount && i < cells.length; i++) {
+        cells[i].style.right = right + 'px';
+        right += cells[i].offsetWidth;
+      }
+    });
+  }
+
+  /* ─── EXPORT DIRECTION ─── */
+  window.toggleDirection = function () {
+    exportDirection = exportDirection === 'rtl' ? 'ltr' : 'rtl';
+    $('dir-btn').textContent = 'اتجاه: ' + exportDirection.toUpperCase();
+    showToast('اتجاه التصدير: ' + (exportDirection === 'rtl' ? 'يمين→يسار' : 'يسار→يمين'), 'success');
+  };
+
+  /* ─── IMPORT ─── */
+  window.importFromExcel = function () {
+    $('file-input').click();
+  };
+
+  (function () {
+    var fileInput = $('file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (typeof XLSX === 'undefined') { showToast('مكتبة الاستيراد لم تُحمّل. تحقق من اتصالك.', 'error'); return; }
+        var reader = new FileReader();
+        reader.onload = function (loadEvent) {
+          try {
+            var data = new Uint8Array(loadEvent.target.result);
+            var workbook = XLSX.read(data, { type: 'array' });
+            var sheetName = workbook.SheetNames[0];
+            var sheet = workbook.Sheets[sheetName];
+            var jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (jsonData.length < 2) {
+              showToast('الملف لا يحتوي على بيانات كافية', 'error');
+              fileInput.value = '';
+              return;
+            }
+            var importedCount = 0;
+            for (var i = 1; i < jsonData.length; i++) {
+              var row = jsonData[i];
+              if (!row || row.length < 3) continue;
+              var entry = {
+                localityCode: String(row[1] || '').trim(),
+                schoolCode: String(row[2] || '').trim(),
+                firstName: String(row[3] || '').trim(),
+                secondName: String(row[4] || '').trim(),
+                thirdName: String(row[5] || '').trim(),
+                fourthName: String(row[6] || '').trim(),
+                gender: String(row[7] || '').trim(),
+                religion: String(row[8] || '').trim(),
+                motherName: String(row[9] || '').trim(),
+                schoolName: String(row[10] || '').trim(),
+                localityName: String(row[11] || '').trim(),
+                operatorName: String(row[12] || '').trim()
+              };
+              if (!entry.firstName) continue;
+              rows.push(entry);
+              importedCount++;
+            }
+            if (importedCount > 0) {
+              pushUndo();
+              saveRows();
+              renderAll();
+              updateSerial();
+              showToast('تم استيراد ' + importedCount + ' صف بنجاح', 'success');
+            } else {
+              showToast('لم يتم العثور على بيانات صالحة للاستيراد', 'warning');
+            }
+          } catch (err) {
+            showToast('فشل الاستيراد: الملف غير صالح', 'error');
+          }
+          fileInput.value = '';
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+  })();
+
+  /* ─── EXPORT ─── */
+  window.exportToExcel = function () {
+    if (rows.length === 0) { showToast('لا توجد بيانات للتصدير', 'warning'); return; }
+    if (typeof XLSX === 'undefined') { showToast('مكتبة التصدير لم تُحمّل. تحقق من اتصالك.', 'error'); return; }
+
+    var exportRows = [];
+    if (searchTerm) {
+      var q = searchTerm.toLowerCase();
+      for (var i2 = 0; i2 < rows.length; i2++) {
+        var r2 = rows[i2];
+        var haystack = (r2.localityCode + ' ' + r2.schoolCode + ' ' + r2.firstName + ' ' +
+          r2.secondName + ' ' + r2.thirdName + ' ' + (r2.fourthName || '') + ' ' +
+          r2.gender + ' ' + r2.religion + ' ' + r2.motherName + ' ' +
+          r2.schoolName + ' ' + r2.localityName + ' ' + r2.operatorName).toLowerCase();
+        if (haystack.indexOf(q) !== -1) exportRows.push(r2);
+      }
+    } else {
+      exportRows = rows.slice();
+    }
+
+    if (exportRows.length === 0) { showToast('لا توجد نتائج للتصدير', 'warning'); return; }
+
+    var headers = [
+      'مسلسل', 'كود المحلية', 'كود المدرسة', 'اسم التلميذ الأول',
+      'اسم التلميذ الثاني', 'اسم التلميذ الثالث', 'اسم التلميذ الرابع',
+      'الجنس', 'الديانة', 'اسم الأم ثلاثي (على الأقل)', 'اسم المدرسة',
+      'المحلية', 'اسم المدخل'
+    ];
+    var wsData = [headers];
+    for (var i = 0; i < exportRows.length; i++) {
+      var r = exportRows[i];
+      wsData.push([
+        i + 1, r.localityCode, r.schoolCode, r.firstName,
+        r.secondName, r.thirdName, r.fourthName || '',
+        r.gender, r.religion, r.motherName,
+        r.schoolName, r.localityName, r.operatorName
+      ]);
+    }
+    var ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 18 },
+      { wch: 18 }, { wch: 18 }, { wch: 18 },
+      { wch: 8 }, { wch: 10 }, { wch: 24 },
+      { wch: 22 }, { wch: 14 }, { wch: 14 }
+    ];
+    ws['!dir'] = exportDirection;
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'ادخال ابتدائي 2025م');
+    XLSX.writeFile(wb, 'نظام_ادخال_الاسماء_مُعبَّأ.xlsx');
+    showToast('تم التصدير — ' + exportRows.length + ' صف' + (searchTerm ? ' (مصفى)' : ''), 'success');
+  };
+
+  /* ─── UPDATE EXPORT BTN ─── */
+  function updateExportBtn() {
+    if (!exportBtn) return;
+    if (searchTerm) {
+      var count = 0;
+      var q = searchTerm.toLowerCase();
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var haystack = (r.localityCode + ' ' + r.schoolCode + ' ' + r.firstName + ' ' +
+          r.secondName + ' ' + r.thirdName + ' ' + (r.fourthName || '') + ' ' +
+          r.gender + ' ' + r.religion + ' ' + r.motherName + ' ' +
+          r.schoolName + ' ' + r.localityName + ' ' + r.operatorName).toLowerCase();
+        if (haystack.indexOf(q) !== -1) count++;
+      }
+      exportBtn.textContent = 'تصدير المصفى (' + count + ')';
+    } else {
+      exportBtn.textContent = 'تصدير الكل (' + rows.length + ')';
+    }
+  }
+
+  /* ─── TOAST ─── */
+  function showToast(msg, type) {
+    type = type || 'success';
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type;
+    t.textContent = msg;
+    toastContainer.appendChild(t);
+    setTimeout(function () {
+      t.classList.add('toast-leaving');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 200);
+    }, TOAST_MS);
+  }
+
+  /* ─── CLEAR BTN ─── */
+  document.addEventListener('click', function (e) {
+    var clear = e.target.closest('.clear-btn');
+    if (clear) {
+      var id = clear.getAttribute('data-clear');
+      if (id) { setVal(id, ''); $(id).focus(); }
+    }
+  });
+
+  /* ─── KEYBOARD ─── */
+  document.addEventListener('keydown', function (e) {
+    // Ctrl+Z
+    if (e.ctrlKey && e.key === 'z') {
+      e.preventDefault();
+      undo();
+    }
+    // / to focus search (only if not already in an input)
+    if (e.key === '/' && document.activeElement && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+    // Escape cancel editing
+    if (e.key === 'Escape' && editingIndex >= 0) {
+      handleCancel();
+    }
+  });
+
+  /* ─── SEARCH ─── */
+  searchInput.addEventListener('input', function () {
+    searchTerm = this.value.trim();
+    renderTable();
+  });
+
+  /* ─── INIT ─── */
+  loadRows();
+  renderAll();
+  updateSerial();
+  form.addEventListener('submit', handleSubmit);
+  cancelBtn.addEventListener('click', handleCancel);
+  resetFormAfterAdd();
+
+  // Setup autocomplete for common fields
+  COMMON_FIELDS.forEach(function (id) { setupAutocomplete(id); });
+
+})();
+</script>
+</body>
+</html>
